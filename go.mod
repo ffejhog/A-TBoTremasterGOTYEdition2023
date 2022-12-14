@@ -1,9 +1,14 @@
-module DongBotRemastered
+module github.com/ffejhog/A-TBoTremasterGOTYEdition2023
 
 go 1.19
 
 require (
-	github.com/bwmarrin/discordgo v0.26.1 // indirect
+	github.com/bwmarrin/discordgo v0.26.1
+	github.com/ian-kent/gofigure v0.0.0-20170502192241-c9dc3a1359af
+	github.com/ostafen/clover v1.2.0
+)
+
+require (
 	github.com/cespare/xxhash v1.1.0 // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
 	github.com/dgraph-io/badger/v3 v3.2103.2 // indirect
@@ -15,16 +20,12 @@ require (
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/google/flatbuffers v2.0.6+incompatible // indirect
-	github.com/google/orderedcode v0.0.1 // indirect
 	github.com/gorilla/websocket v1.4.2 // indirect
 	github.com/ian-kent/envconf v0.0.0-20141026121121-c19809918c02 // indirect
-	github.com/ian-kent/gofigure v0.0.0-20170502192241-c9dc3a1359af // indirect
 	github.com/klauspost/compress v1.15.9 // indirect
-	github.com/ostafen/clover/v2 v2.0.0-alpha.2 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/satori/go.uuid v1.2.0 // indirect
-	github.com/vmihailenco/msgpack/v5 v5.3.5 // indirect
-	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
+	github.com/smartystreets/goconvey v1.7.2 // indirect
 	go.opencensus.io v0.23.0 // indirect
 	golang.org/x/crypto v0.0.0-20210421170649-83a5a9bb288b // indirect
 	golang.org/x/net v0.0.0-20220728211354-c7608f3a8462 // indirect
