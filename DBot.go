@@ -5,12 +5,12 @@ import (
 	"fmt"
 	"github.com/bwmarrin/discordgo"
 	"github.com/ostafen/clover"
+	"log"
 )
 
 type Config struct {
 	DiscordSessionToken string `env:"DISCORD_SESSION_TOKEN" flag:"sessionToken" flagDesc:"The Session token for the Discord Bot"`
 	DatabaseDir         string `env:"DATABASE_DIRECTORY" flag:"dbDir" flagDesc:"The directory to store the database in"`
-	DefaultMessage      string `env:"DEFAULT_MESSAGE" flag:"defaultMessage" flagDesc:"The default response"`
 }
 
 type DBot struct {
@@ -18,7 +18,6 @@ type DBot struct {
 	Config           Config
 	DB               *clover.DB
 	MarkovCollection string
-	DefaultMessage   string
 }
 
 func (b *DBot) Connect() error {
@@ -46,5 +45,18 @@ func (b *DBot) Connect() error {
 	if err != nil {
 		fmt.Println("error opening connection,", err)
 	}
+
+	command := discordgo.ApplicationCommand{
+		Name:        "dbdump",
+		Description: "Completely Dumps the Markov Chain Database",
+	}
+
+	_, err = b.Discord.ApplicationCommandCreate(b.Discord.State.User.ID, "", &command)
+	if err != nil {
+		log.Panicf("Cannot create command: %v", err)
+	}
+
+	b.Discord.AddHandler(b.DumpDatabase)
+
 	return err
 }

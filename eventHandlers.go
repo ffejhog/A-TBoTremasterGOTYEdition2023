@@ -6,6 +6,7 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/ostafen/clover"
 	"math/rand"
+	"os"
 	"strings"
 	"time"
 )
@@ -100,6 +101,29 @@ func (b *DBot) RespondMarkov(s *discordgo.Session, m *discordgo.MessageCreate) {
 		}
 	}
 	s.ChannelMessageSend(m.ChannelID, generatedResponse.String())
+}
+
+func (b *DBot) DumpDatabase(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	if i.ApplicationCommandData().Name != "dbdump" {
+		return
+	}
+	b.DB.ExportCollection(b.MarkovCollection, "export.json")
+
+	file, _ := os.Open("export.json")
+
+	discordAttachment := discordgo.File{
+		Name:        "DBDump.json",
+		ContentType: "application/json",
+		Reader:      file,
+	}
+
+	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseChannelMessageWithSource,
+		Data: &discordgo.InteractionResponseData{
+			Content: "Here is the Database dump you requested",
+			Files:   []*discordgo.File{&discordAttachment},
+		},
+	})
 }
 
 func containsUser(s string, user string) bool {
