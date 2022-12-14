@@ -10,6 +10,7 @@ import (
 type Config struct {
 	DiscordSessionToken string `env:"DISCORD_SESSION_TOKEN" flag:"sessionToken" flagDesc:"The Session token for the Discord Bot"`
 	DatabaseDir         string `env:"DATABASE_DIRECTORY" flag:"dbDir" flagDesc:"The directory to store the database in"`
+	DefaultMessage      string `env:"DEFAULT_MESSAGE" flag:"defaultMessage" flagDesc:"The default response"`
 }
 
 type DBot struct {
@@ -17,6 +18,7 @@ type DBot struct {
 	Config           Config
 	DB               *clover.DB
 	MarkovCollection string
+	DefaultMessage   string
 }
 
 func (b *DBot) Connect() error {
@@ -30,14 +32,13 @@ func (b *DBot) Connect() error {
 		b.DB.CreateCollection(b.MarkovCollection)
 	}
 
-	defer b.DB.Close()
-
 	b.Discord, err = discordgo.New("Bot " + b.Config.DiscordSessionToken)
 	if err != nil {
 		fmt.Println("error opening connection,", err)
 	}
 	// Handlers
 	b.Discord.AddHandler(b.TrainMarkov)
+	b.Discord.AddHandler(b.RespondMarkov)
 
 	b.Discord.Identify.Intents = discordgo.IntentsGuildMessages
 
