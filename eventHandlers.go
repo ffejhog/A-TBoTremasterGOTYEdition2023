@@ -6,6 +6,7 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/ostafen/clover"
 	"math/rand"
+	"net/http"
 	"os"
 	"strings"
 	"time"
@@ -124,6 +125,52 @@ func (b *DBot) DumpDatabase(s *discordgo.Session, i *discordgo.InteractionCreate
 			Files:   []*discordgo.File{&discordAttachment},
 		},
 	})
+}
+
+func (b *DBot) GenerateImage(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	if i.ApplicationCommandData().Name != "give" {
+		return
+	}
+
+	errMsg := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
+		Data: &discordgo.InteractionResponseData{
+			Content: "Generating...",
+		},
+	})
+
+	fmt.Println(errMsg)
+
+	prompt := strings.ReplaceAll(i.ApplicationCommandData().Options[0].Value.(string), " ", "-")
+
+	client := &http.Client{}
+	req, _ := http.NewRequest("GET", "https://api.computerender.com/generate/"+prompt, nil)
+	// ...
+	req.Header.Add("Authorization", "X-API-Key "+b.Config.RenderAPIKey)
+	resp, err := client.Do(req)
+
+	if err != nil || resp.StatusCode >= 300 {
+		failureString := "Failed to generate image :("
+		_, err = s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
+			Content: &failureString,
+		})
+		return
+	}
+
+	discordAttachment := discordgo.File{
+		Name:        prompt + ".jpeg",
+		ContentType: "image/jpeg",
+		Reader:      resp.Body,
+	}
+
+	responseString := "Here is your " + i.ApplicationCommandData().Options[0].Value.(string)
+
+	_, err = s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
+		Content: &responseString,
+		Files:   []*discordgo.File{&discordAttachment},
+	})
+	fmt.Println(err)
+	defer resp.Body.Close()
 }
 
 func containsUser(s string, user string) bool {

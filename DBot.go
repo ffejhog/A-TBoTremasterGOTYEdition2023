@@ -11,6 +11,7 @@ import (
 type Config struct {
 	DiscordSessionToken string `env:"DISCORD_SESSION_TOKEN" flag:"sessionToken" flagDesc:"The Session token for the Discord Bot"`
 	DatabaseDir         string `env:"DATABASE_DIRECTORY" flag:"dbDir" flagDesc:"The directory to store the database in"`
+	RenderAPIKey        string `env:"COMPUTER_RENDER_API_TOKEN" flag:"computerrenderapitoken" flagDesc:"The Computer Render api token for image generation"`
 }
 
 type DBot struct {
@@ -46,17 +47,35 @@ func (b *DBot) Connect() error {
 		fmt.Println("error opening connection,", err)
 	}
 
-	command := discordgo.ApplicationCommand{
+	dbDumpCommand := discordgo.ApplicationCommand{
 		Name:        "dbdump",
 		Description: "Completely Dumps the Markov Chain Database",
 	}
 
-	_, err = b.Discord.ApplicationCommandCreate(b.Discord.State.User.ID, "", &command)
+	imageGenCommand := discordgo.ApplicationCommand{
+		Name:        "give",
+		Description: "Generate an AI image",
+		Options: []*discordgo.ApplicationCommandOption{
+			{
+				Type:        discordgo.ApplicationCommandOptionString,
+				Name:        "prompt",
+				Description: "Prompt",
+				Required:    true,
+			}},
+	}
+
+	_, err = b.Discord.ApplicationCommandCreate(b.Discord.State.User.ID, "", &dbDumpCommand)
+	if err != nil {
+		log.Panicf("Cannot create command: %v", err)
+	}
+
+	_, err = b.Discord.ApplicationCommandCreate(b.Discord.State.User.ID, "", &imageGenCommand)
 	if err != nil {
 		log.Panicf("Cannot create command: %v", err)
 	}
 
 	b.Discord.AddHandler(b.DumpDatabase)
+	b.Discord.AddHandler(b.GenerateImage)
 
 	return err
 }
