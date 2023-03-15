@@ -2,9 +2,11 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"github.com/bwmarrin/discordgo"
 	"github.com/ostafen/clover"
+	"github.com/sashabaranov/go-openai"
 	"math/rand"
 	"net/http"
 	"os"
@@ -102,6 +104,56 @@ func (b *DBot) RespondMarkov(s *discordgo.Session, m *discordgo.MessageCreate) {
 		}
 	}
 	s.ChannelMessageSend(m.ChannelID, generatedResponse.String())
+}
+
+func (b *DBot) RespondGPT(s *discordgo.Session, m *discordgo.MessageCreate) {
+	if m.Author.ID == s.State.User.ID {
+		return
+	}
+	if !containsUser(m.Content, "<@"+s.State.User.ID+">") {
+		return
+	}
+	fmt.Println("Responding...")
+
+	lastMessages, _ := s.ChannelMessages(m.ChannelID, 5, "", "", "")
+
+	var gptMessages []openai.ChatCompletionMessage
+	gptMessages = append(gptMessages, openai.ChatCompletionMessage{
+		Role: openai.ChatMessageRoleSystem,
+		Content: "You are a chatbot named " + b.Config.Name + ". Your responses are typically witty or humorous in some way." +
+			"You are friendly and are happy to respond to inquiries, and will fall back to humor whenever you are unsure what to respond." +
+			"The channel you are in typically is gaming related, but not always. The last few messages sent will be sent in the assistant role for context.",
+	})
+
+	for _, element := range lastMessages {
+		gptMessages = append(gptMessages, openai.ChatCompletionMessage{
+			Role:    openai.ChatMessageRoleAssistant,
+			Content: element.Content,
+		})
+	}
+
+	gptMessages = append(gptMessages, openai.ChatCompletionMessage{
+		Role:    openai.ChatMessageRoleUser,
+		Content: m.Content,
+	})
+
+	resp, err := b.GPT.CreateChatCompletion(
+		context.Background(),
+		openai.ChatCompletionRequest{
+			Model:    openai.GPT3Dot5Turbo,
+			Messages: gptMessages,
+		},
+	)
+
+	fmt.Println("Logging Response:")
+	fmt.Println(resp)
+
+	if err != nil {
+		fmt.Printf("ChatCompletion error: %v\n", err)
+		return
+	}
+
+	s.ChannelMessageSend(m.ChannelID, resp.Choices[0].Message.Content)
 }
 
 func (b *DBot) DumpDatabase(s *discordgo.Session, i *discordgo.InteractionCreate) {
