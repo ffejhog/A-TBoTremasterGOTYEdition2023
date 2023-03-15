@@ -115,7 +115,7 @@ func (b *DBot) RespondGPT(s *discordgo.Session, m *discordgo.MessageCreate) {
 	}
 	fmt.Println("Responding...")
 
-	lastMessages, _ := s.ChannelMessages(m.ChannelID, 5, "", "", "")
+	lastMessages, _ := s.ChannelMessages(m.ChannelID, 20, "", "", "")
 
 	var gptMessages []openai.ChatCompletionMessage
 	gptMessages = append(gptMessages, openai.ChatCompletionMessage{
