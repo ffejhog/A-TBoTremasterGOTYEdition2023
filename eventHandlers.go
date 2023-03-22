@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/bwmarrin/discordgo"
+	client "github.com/ffejhog/A-TBoTremasterGOTYEdition2023/llama-client"
 	"github.com/ostafen/clover"
 	"github.com/sashabaranov/go-openai"
 	"math/rand"
@@ -142,7 +143,7 @@ func (b *DBot) RespondGPT(s *discordgo.Session, m *discordgo.MessageCreate) {
 	resp, err := b.GPT.CreateChatCompletion(
 		context.Background(),
 		openai.ChatCompletionRequest{
-			Model:    openai.GPT3Dot5Turbo,
+			Model:    openai.GPT3Davinci,
 			Messages: gptMessages,
 		},
 	)
@@ -156,6 +157,23 @@ func (b *DBot) RespondGPT(s *discordgo.Session, m *discordgo.MessageCreate) {
 	}
 
 	s.ChannelMessageSend(m.ChannelID, resp.Choices[0].Message.Content)
+}
+
+func (b *DBot) RespondLlama(s *discordgo.Session, m *discordgo.MessageCreate) {
+	if !containsUser(m.Content, "<@"+s.State.User.ID+">") {
+		return
+	}
+	rand.Seed(time.Now().Unix())
+	out, err := b.llamaClient.Predict(strings.ReplaceAll(m.Content, "<@"+s.State.User.ID+">", ""),
+		client.WithTokens(150),
+		client.WithTemperature(0.7),
+		client.WithTopK(50),
+		client.WithTopP(0.8))
+
+	if err != nil {
+		panic(err)
+	}
+	s.ChannelMessageSend(m.ChannelID, out)
 }
 
 func (b *DBot) DumpDatabase(s *discordgo.Session, i *discordgo.InteractionCreate) {
