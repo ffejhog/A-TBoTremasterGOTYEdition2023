@@ -4,7 +4,6 @@ import "C"
 import (
 	"fmt"
 	"github.com/bwmarrin/discordgo"
-	client "github.com/ffejhog/A-TBoTremasterGOTYEdition2023/llama-client"
 	"github.com/ostafen/clover"
 	openai "github.com/sashabaranov/go-openai"
 	"log"
@@ -17,7 +16,8 @@ type Config struct {
 	ChatMode            string `env:"CHAT_MODE" flag:"chatmode" flagDesc:"A flag for the mode of chatting to use."`
 	OpenAPIToken        string `env:"OPENAPI_TOKEN" flag:"openapitoken" flagDesc:"The token for the open api"`
 	Name                string `env:"BOT_NAME" flag:"botName" flagDesc:"The name of the chatbot for GPT"`
-	LlamaApiEndpoint    string `env:"LLAMA_ENDPOINT" flag:"llamaEndpoint" flagDesc:"The endpoint for the llama api"`
+	SergeApiEndpoint    string `env:"SERGE_ENDPOINT" flag:"sergeEndpoint" flagDesc:"The endpoint for the serge api"`
+	SergeChatId         string `env:"SERGE_CHATID" flag:"sergeChatId" flagDesc:"The chatid serge api"`
 }
 
 type DBot struct {
@@ -26,7 +26,6 @@ type DBot struct {
 	DB               *clover.DB
 	MarkovCollection string
 	GPT              *openai.Client
-	llamaClient      *client.Client
 }
 
 func (b *DBot) Connect() error {
@@ -41,8 +40,6 @@ func (b *DBot) Connect() error {
 	}
 
 	b.GPT = openai.NewClient(b.Config.OpenAPIToken)
-
-	b.llamaClient = client.NewClient(b.Config.LlamaApiEndpoint)
 
 	b.Discord, err = discordgo.New("Bot " + b.Config.DiscordSessionToken)
 	if err != nil {

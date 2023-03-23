@@ -5,11 +5,12 @@ import (
 	"context"
 	"fmt"
 	"github.com/bwmarrin/discordgo"
-	client "github.com/ffejhog/A-TBoTremasterGOTYEdition2023/llama-client"
+	"github.com/donovanhide/eventsource"
 	"github.com/ostafen/clover"
 	"github.com/sashabaranov/go-openai"
 	"math/rand"
 	"net/http"
+	"net/url"
 	"os"
 	"strings"
 	"time"
@@ -163,17 +164,32 @@ func (b *DBot) RespondLlama(s *discordgo.Session, m *discordgo.MessageCreate) {
 	if !containsUser(m.Content, "<@"+s.State.User.ID+">") {
 		return
 	}
-	rand.Seed(time.Now().Unix())
-	out, err := b.llamaClient.Predict(strings.ReplaceAll(m.Content, "<@"+s.State.User.ID+">", ""),
-		client.WithTokens(150),
-		client.WithTemperature(0.7),
-		client.WithTopK(50),
-		client.WithTopP(0.8))
-
+	generatedPrompt := strings.ReplaceAll(m.Content, "<@"+s.State.User.ID+">", "")
+	genUrl := b.Config.SergeApiEndpoint + b.Config.SergeChatId + "/question?prompt=" + url.QueryEscape(generatedPrompt)
+	fmt.Println(genUrl)
+	stream, err := eventsource.Subscribe(genUrl, "")
 	if err != nil {
 		panic(err)
 	}
-	s.ChannelMessageSend(m.ChannelID, out)
+	builder := strings.Builder{}
+builderLoop:
+	for {
+		select {
+		case ev := <-stream.Events:
+			fmt.Println(ev.Id(), ev.Event(), ev.Data())
+			if ev.Event() == "message" {
+				builder.WriteString(ev.Data())
+			}
+		case <-time.After(16 * time.Second):
+			break builderLoop
+		}
+	}
+	fmt.Println("Message complete")
+	if builder.Len() == 0 {
+		s.ChannelMessageSend(m.ChannelID, "Failed to generate response. Check chat instance id.")
+	} else {
+		s.ChannelMessageSend(m.ChannelID, builder.String())
+	}
 }
 
 func (b *DBot) DumpDatabase(s *discordgo.Session, i *discordgo.InteractionCreate) {
